@@ -28,3 +28,6 @@ The DAG consists of three main tasks:
   airflow webserver
   ```
 - **Paste the main.py file in dags folder of Airflow and Run the DAG with tag a2**
+
+- ![image](https://github.com/msubhanahmed/MLOPS-A4/assets/77486332/8bb91c35-70e5-448f-8946-622573eedc2f)
+
