@@ -15,7 +15,7 @@ default_args = {'owner': 'airflow', 'depends_on_past': False, 'email_on_failure'
 dag = DAG( 'MLOPS-A2', default_args=default_args, description='An Airflow DAG to Scrap News Articles and Push to Git', schedule_interval='@daily', start_date=days_ago(1), tags=['a2'])
 
 
-def push_to_git():
+def push_to_github():
     print("Directory", os.getcwd()) ## Make Sure to Start from MLOPS/A2
 
     command = 'cd .. && cd Data && dvc add data.csv && dvc push && git add . && git commit -m "Automated Push" && git push'
@@ -28,7 +28,7 @@ def push_to_git():
 
 
 
-def extract_links_and_metadata():
+def loadandTransform():
     def sentiment_analysis(text):
         try:
             API_URL = "https://api-inference.huggingface.co/models/mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis"
@@ -76,14 +76,14 @@ def extract_links_and_metadata():
 
     return data
 
-def store_data_in_csv(**kwargs):
+def savetoCSV(**kwargs):
     directory = "/home/msa/Desktop/MLOPS/Data"
     if not os.path.exists(directory):
         os.makedirs(directory)
 
     data = kwargs['ti'].xcom_pull(task_ids='extract_links')
     if not data:
-        raise ValueError("No data received from extract_links task.")
+        raise ValueError("No Data Provided")
     
     csv_file = os.path.join(directory,'data.csv')
     try:
@@ -94,13 +94,13 @@ def store_data_in_csv(**kwargs):
             for item in data:
                 writer.writerow(item)
                 print("*"*10, item,"*"*10)
-        print(f"Data successfully stored in CSV file: {csv_file}")
+        print("Data successfully stored")
     except Exception as e:
-        print(f"Error occurred while writing to CSV file: {e}")
+        print(f"Error occurred while saving data: {e}")
         raise e
 
-t1      = PythonOperator( task_id='extract_links',      python_callable=extract_links_and_metadata, execution_timeout=timedelta(seconds=180) ,    dag=dag )
-t2      = PythonOperator( task_id='store_data_in_csv',  python_callable=store_data_in_csv,          provide_context=True, dag=dag,)
-t3      = PythonOperator( task_id='push_to_git',        python_callable=push_to_git,                dag=dag )
+t1      = PythonOperator( task_id='extract_links',      python_callable=loadandTransform,   execution_timeout=timedelta(seconds=180) ,    dag=dag )
+t2      = PythonOperator( task_id='store_data_in_csv',  python_callable=savetoCSV,          provide_context=True, dag=dag,)
+t3      = PythonOperator( task_id='push_to_git',        python_callable=push_to_github,                dag=dag )
 
 t1 >> t2 >> t3
